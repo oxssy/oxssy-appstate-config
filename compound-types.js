@@ -1,8 +1,11 @@
-import { AppStateTypes } from 'oxssy-appstate';
+import { AppStateTypes, isAppState } from 'oxssy-appstate';
 import { createConfigType, inferType } from './basic-types';
 import { Configurator, ShapeConfigurator, ValidationConfigurator } from './Configurator';
 
 const getAppStateTypeForShape = (shapeConfig) => {
+  if (isAppState(shapeConfig)) {
+    return shapeConfig.type;
+  }
   if (shapeConfig instanceof ShapeConfigurator) {
     return getAppStateTypeForShape(shapeConfig.shapeConfig);
   }

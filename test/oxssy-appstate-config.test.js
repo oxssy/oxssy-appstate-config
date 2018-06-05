@@ -1,4 +1,4 @@
-import { find } from 'oxssy-appstate';
+import { AppState, find } from 'oxssy-appstate';
 import {
   ORequiredEnum,
   ORequiredString,
@@ -13,6 +13,7 @@ class TestClass {}
 
 describe('AppState config', () => {
   test('configuring AppStates', () => {
+    const testAppState = new AppState();
     const enumValue = ORequiredEnum(['A', 'B', 'C']).defaultsTo('B');
 
     const type = shape({
@@ -34,6 +35,7 @@ describe('AppState config', () => {
         nestedString: ORequiredString().defaultsTo('nested'),
         withNull: null,
       },
+      withAppState: testAppState,
       validation: validates('withEnum'),
     });
 
@@ -44,6 +46,7 @@ describe('AppState config', () => {
     expect(find(states, 'withEmptyObject').value).toEqual({});
     expect(find(states, 'nested/nestedString').value).toBe('nested');
     expect(find(states, 'nested/withNull').value).toBeNull();
+    expect(find(states, 'withAppState')).toBe(testAppState);
     expect(find(states, 'withType').value).toEqual({
       withType: null,
       withRequiredType: 'default',

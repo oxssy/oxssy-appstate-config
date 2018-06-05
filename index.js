@@ -1,4 +1,4 @@
-import { AppState, ArrayAppState, CompositeAppState, ValidationAppState, find } from 'oxssy-appstate';
+import { AppState, ArrayAppState, CompositeAppState, ValidationAppState, find, isAppState } from 'oxssy-appstate';
 import { Configurator, ShapeConfigurator, ValidationConfigurator } from './Configurator';
 import BasicTypes, { inferType } from './basic-types';
 import CompoundTypes from './compound-types';
@@ -53,39 +53,50 @@ export function validates(path) {
   return new ValidationConfigurator(path);
 }
 
-export function config(appStatesConfig, bubbleUp = true, name = '/') {
+export function config(appStatesConfig, bubbleUp = true) {
+  if (isAppState(appStatesConfig)) {
+    return appStatesConfig;
+  }
   if (appStatesConfig instanceof Configurator) {
-    return new AppState(name, appStatesConfig.appstateType, appStatesConfig.defaultValue);
+    return new AppState(
+      appStatesConfig.appstateType,
+      appStatesConfig.defaultValue,
+      appStatesConfig.shouldResetOnDisconnect,
+    );
   }
   if (appStatesConfig instanceof ShapeConfigurator) {
-    return config(appStatesConfig.shapeConfig, appStatesConfig.bubbleUp, name);
+    return config(appStatesConfig.shapeConfig, appStatesConfig.bubbleUp);
   }
 
   const configurator = inferType(appStatesConfig);
   if (configurator) {
-    return new AppState(name, configurator.appstateType, configurator.defaultValue);
+    return new AppState(
+      configurator.appstateType,
+      configurator.defaultValue,
+      configurator.shouldResetOnDisconnect,
+    );
   }
 
   if (Array.isArray(appStatesConfig)) {
-    const arrayState = new ArrayAppState(name);
-    appStatesConfig.forEach(([childConfig, childIndex]) => {
-      arrayState.push(config(childConfig, bubbleUp, `${childIndex}`));
+    const arrayState = new ArrayAppState();
+    appStatesConfig.forEach((childConfig) => {
+      arrayState.push(config(childConfig, bubbleUp));
     });
     return arrayState;
   }
 
-  const compositeState = new CompositeAppState(name);
+  const compositeState = new CompositeAppState();
   const validations = {};
   Object.entries(appStatesConfig).forEach(([childName, childConfig]) => {
     if (childConfig instanceof ValidationConfigurator) {
       validations[childName] = childConfig;
     } else {
-      compositeState.add(config(childConfig, bubbleUp, childName));
+      compositeState.add(childName, config(childConfig, bubbleUp));
     }
   });
 
   Object.entries(validations).forEach(([childName, validation]) => {
-    compositeState.add(new ValidationAppState(childName, find(compositeState, validation.path)));
+    compositeState.add(childName, new ValidationAppState(find(compositeState, validation.path)));
   });
   return compositeState;
 }

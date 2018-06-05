@@ -1,7 +1,8 @@
 export class Configurator {
-  constructor(appstateType, defaultValue = null) {
+  constructor(appstateType, defaultValue = null, shouldResetOnDisconnect = false) {
     this.appstateType = appstateType;
     this.defaultValue = defaultValue;
+    this.shouldResetOnDisconnect = shouldResetOnDisconnect;
   }
 }
 

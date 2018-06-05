@@ -5,23 +5,35 @@ import { Configurator, ShapeConfigurator, ValidationConfigurator } from './Confi
 
 const exports = {};
 
-export const createConfigType = appstateType => (options) => {
-  let configurator;
-  if (options) {
-    configurator = new Configurator(appstateType.withOptions(options));
-    configurator.defaultsTo = defaultValue =>
-      new Configurator(appstateType.withOptions(options), defaultValue);
-  } else {
-    configurator = new Configurator(appstateType);
-    configurator.defaultsTo = defaultValue =>
-      new Configurator(appstateType, defaultValue);
-  }
-  return configurator;
-};
+export const createConfigType = (appstateType, shouldResetOnDisconnect = false) =>
+  (options) => {
+    let configurator;
+    if (options) {
+      configurator = new Configurator(
+        appstateType.withOptions(options),
+        null,
+        shouldResetOnDisconnect,
+      );
+      configurator.defaultsTo = defaultValue =>
+        new Configurator(
+          appstateType.withOptions(options),
+          defaultValue,
+          shouldResetOnDisconnect,
+        );
+    } else {
+      configurator = new Configurator(appstateType, null, shouldResetOnDisconnect);
+      configurator.defaultsTo = defaultValue =>
+        new Configurator(appstateType, defaultValue, shouldResetOnDisconnect);
+    }
+    return configurator;
+  };
 
-const createCompoundConfigType = (appstateType, isRequired) =>
+const createCompoundConfigType = (appstateType, isRequired, shouldResetOnDisconnect = false) =>
   (spec, options) =>
-    createConfigType(isRequired ? appstateType(spec).isRequired : appstateType(spec))(options);
+    createConfigType(
+      isRequired ? appstateType(spec).isRequired : appstateType(spec),
+      shouldResetOnDisconnect,
+    )(options);
 
 const createCustomConfigType = isRequired => (validationFunction) => {
   const configurator = new Configurator(isRequired
@@ -33,6 +45,10 @@ const createCustomConfigType = isRequired => (validationFunction) => {
       : AppStateTypes.custom(validationFunction), defaultValue);
   return configurator;
 };
+
+const createShortcutConfigType = (appstateType, shouldResetOnDisconnect, builtInOptions) =>
+  options =>
+    createConfigType(appstateType, shouldResetOnDisconnect)({ ...builtInOptions, ...options });
 
 const primitives = {
   Any: AppStateTypes.any,
@@ -64,6 +80,20 @@ Object.entries(simpleCompounds).forEach(([name, baseType]) => {
 
 exports.OValidate = createCustomConfigType(false);
 exports.ORequiredValidate = createCustomConfigType(true);
+exports.OEmail = createShortcutConfigType(AppStateTypes.string, false, { isEmail: true });
+exports.ORequiredEmail = createShortcutConfigType(AppStateTypes.string.isRequired, false, {
+  isEmail: true,
+});
+exports.OUrl = createShortcutConfigType(AppStateTypes.string, false, { isUrl: true });
+exports.ORequiredUrl = createShortcutConfigType(AppStateTypes.string.isRequired, false, {
+  isUrl: true,
+});
+exports.OUuid = createShortcutConfigType(AppStateTypes.string, false, { isUuid: true });
+exports.ORequiredUuid = createShortcutConfigType(AppStateTypes.string.isRequired, false, {
+  isUuid: true,
+});
+exports.OPassword = createShortcutConfigType(AppStateTypes.string, true, {});
+exports.ORequiredPassword = createShortcutConfigType(AppStateTypes.string.isRequired, true, {});
 
 export default exports;
 
