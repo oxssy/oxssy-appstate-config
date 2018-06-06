@@ -1,3 +1,5 @@
+export class InvalidConfigurator {}
+
 export class Configurator {
   constructor(appstateType, defaultValue = null, shouldResetOnDisconnect = false) {
     this.appstateType = appstateType;

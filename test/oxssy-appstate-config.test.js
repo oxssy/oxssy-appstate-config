@@ -1,27 +1,28 @@
 import { AppState, find } from 'oxssy-appstate';
 import {
-  ORequiredEnum,
-  ORequiredString,
-  ORequiredArrayOf,
+  OEnum,
   OString,
+  OArrayOf,
   config,
   shape,
   validates,
-} from '../index';
+} from '../src';
 
 class TestClass {}
 
 describe('AppState config', () => {
   test('configuring AppStates', () => {
     const testAppState = new AppState();
-    const enumValue = ORequiredEnum(['A', 'B', 'C']).defaultsTo('B');
+    const testClassObject = new TestClass();
+    const enumValue = OEnum(['A', 'B', 'C']).isRequired.defaultsTo('B');
 
     const type = shape({
-      withType: OString(),
-      withRequiredType: ORequiredString().defaultsTo('default'),
+      withPrimitive: OString(),
+      withPrimitiveDefault: OString().defaultsTo('default'),
+      withRequiredPrimitive: OString().isRequired.defaultsTo('required default'),
       withDefaultValue: 'another default',
       withShape: enumValue,
-      withEnumInArray: ORequiredArrayOf(enumValue),
+      withEnumInArray: OArrayOf(enumValue).isRequired.defaultsTo(['A']),
     });
 
     const states = config({
@@ -29,10 +30,10 @@ describe('AppState config', () => {
       withEnum: enumValue,
       withArray: [1, 2, 3],
       withArrayOfDifferentTypes: [1, 'string', {}],
-      withClass: TestClass,
+      withClassObject: testClassObject,
       withEmptyObject: {},
       nested: {
-        nestedString: ORequiredString().defaultsTo('nested'),
+        nestedString: OString().defaultsTo('nested'),
         withNull: null,
       },
       withAppState: testAppState,
@@ -42,17 +43,18 @@ describe('AppState config', () => {
     expect(find(states, 'withEnum').value).toBe('B');
     expect(find(states, 'withArray').value).toEqual([1, 2, 3]);
     expect(find(states, 'withArrayOfDifferentTypes').value).toEqual([1, 'string', {}]);
-    expect(find(states, 'withClass').value).toBeNull();
+    expect(find(states, 'withClassObject').value).toBe(testClassObject);
     expect(find(states, 'withEmptyObject').value).toEqual({});
     expect(find(states, 'nested/nestedString').value).toBe('nested');
     expect(find(states, 'nested/withNull').value).toBeNull();
     expect(find(states, 'withAppState')).toBe(testAppState);
     expect(find(states, 'withType').value).toEqual({
-      withType: null,
-      withRequiredType: 'default',
+      withPrimitive: null,
+      withPrimitiveDefault: 'default',
+      withRequiredPrimitive: 'required default',
       withDefaultValue: 'another default',
       withShape: 'B',
-      withEnumInArray: null,
+      withEnumInArray: ['A'],
     });
   });
 });

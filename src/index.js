@@ -1,49 +1,39 @@
-import { AppState, ArrayAppState, CompositeAppState, ValidationAppState, find, isAppState } from 'oxssy-appstate';
-import { Configurator, ShapeConfigurator, ValidationConfigurator } from './Configurator';
-import BasicTypes, { inferType } from './basic-types';
-import CompoundTypes from './compound-types';
+import {
+  AppState,
+  ArrayAppState,
+  CompositeAppState,
+  ValidationAppState,
+  find,
+  isAppState,
+} from 'oxssy-appstate';
+import {
+  Configurator,
+  InvalidConfigurator,
+  ShapeConfigurator,
+  ValidationConfigurator,
+} from './Configurator';
+import Types, { inferType } from './types';
 
 export const {
   OAny,
   OArray,
+  OArrayOf,
   OBool,
   OElement,
   OEnum,
+  OExactShapeOf,
   OFunc,
   OInstance,
   ONode,
   ONumber,
   OObject,
-  ORequiredAny,
-  ORequiredArray,
-  ORequiredBool,
-  ORequiredElement,
-  ORequiredEnum,
-  ORequiredFunc,
-  ORequiredInstance,
-  ORequiredNode,
-  ORequiredNumber,
-  ORequiredObject,
-  ORequiredString,
-  ORequiredSymbol,
-  ORequiredValidate,
+  OObjectOf,
+  OOneOfType,
+  OShapeOf,
   OString,
   OSymbol,
   OValidate,
-} = BasicTypes;
-
-export const {
-  OArrayOf,
-  OExactShapeOf,
-  OObjectOf,
-  OOneOfType,
-  ORequiredArrayOf,
-  ORequiredExactShapeOf,
-  ORequiredObjectOf,
-  ORequiredOneOfType,
-  ORequiredShapeOf,
-  OShapeOf,
-} = CompoundTypes;
+} = Types;
 
 export function shape(appStatesConfig, bubbleUp = true) {
   return new ShapeConfigurator(appStatesConfig, bubbleUp);
@@ -53,9 +43,12 @@ export function validates(path) {
   return new ValidationConfigurator(path);
 }
 
-export function config(appStatesConfig, bubbleUp = true) {
+export function config(appStatesConfig, bubbleUp = true, key = null) {
   if (isAppState(appStatesConfig)) {
     return appStatesConfig;
+  }
+  if (appStatesConfig instanceof InvalidConfigurator) {
+    throw new Error(`Required AppState must have a default value${key ? `: ${key}` : ''}`);
   }
   if (appStatesConfig instanceof Configurator) {
     return new AppState(
@@ -91,7 +84,7 @@ export function config(appStatesConfig, bubbleUp = true) {
     if (childConfig instanceof ValidationConfigurator) {
       validations[childName] = childConfig;
     } else {
-      compositeState.add(childName, config(childConfig, bubbleUp));
+      compositeState.add(childName, config(childConfig, bubbleUp, childName));
     }
   });
 
