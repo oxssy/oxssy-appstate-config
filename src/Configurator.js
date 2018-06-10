@@ -9,8 +9,12 @@ export class Configurator {
 }
 
 export class ShapeConfigurator {
-  constructor(shapeConfig) {
+  constructor(shapeConfig, isRequired = false) {
     this.shapeConfig = shapeConfig;
+    this.isShapeRequired = isRequired;
+    if (!isRequired) {
+      this.isRequired = new ShapeConfigurator(shapeConfig, true);
+    }
   }
 }
 
