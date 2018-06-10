@@ -1,7 +1,7 @@
 export class InvalidConfigurator {}
 
 export class Configurator {
-  constructor(dataType, defaultValue = null, resetOnBlink = false) {
+  constructor(dataType, defaultValue = null, hasHandler = false, resetOnBlink = false) {
     this.dataType = dataType;
     this.defaultValue = defaultValue;
     this.resetOnBlink = resetOnBlink;

@@ -52,6 +52,7 @@ export function config(dataConfig) {
     return new Oxssy(
       dataConfig.dataType,
       dataConfig.defaultValue,
+      true,
       dataConfig.resetOnBlink,
     );
   }
@@ -64,6 +65,7 @@ export function config(dataConfig) {
     return new Oxssy(
       configurator.dataType,
       configurator.defaultValue,
+      true,
       configurator.resetOnBlink,
     );
   }
