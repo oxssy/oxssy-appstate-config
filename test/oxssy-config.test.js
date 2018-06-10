@@ -1,4 +1,4 @@
-import { AppState, find } from 'oxssy-appstate';
+import { Oxssy, find } from 'oxssy';
 import {
   OEnum,
   OString,
@@ -10,9 +10,9 @@ import {
 
 class TestClass {}
 
-describe('AppState config', () => {
-  test('configuring AppStates', () => {
-    const testAppState = new AppState();
+describe('Oxssy config', () => {
+  test('configuring data', () => {
+    const testAppState = new Oxssy();
     const testClassObject = new TestClass();
     const enumValue = OEnum(['A', 'B', 'C']).isRequired.defaultsTo('B');
 
@@ -21,7 +21,7 @@ describe('AppState config', () => {
       withPrimitiveDefault: OString().defaultsTo('default'),
       withRequiredPrimitive: OString().isRequired.defaultsTo('required default'),
       withDefaultValue: 'another default',
-      withShape: enumValue,
+      withEnum: enumValue,
       withEnumInArray: OArrayOf(enumValue).isRequired.defaultsTo(['A']),
     });
 
@@ -45,15 +45,15 @@ describe('AppState config', () => {
     expect(find(states, 'withArrayOfDifferentTypes').value).toEqual([1, 'string', {}]);
     expect(find(states, 'withClassObject').value).toBe(testClassObject);
     expect(find(states, 'withEmptyObject').value).toEqual({});
-    expect(find(states, 'nested/nestedString').value).toBe('nested');
-    expect(find(states, 'nested/withNull').value).toBeNull();
+    expect(find(states, 'nested.nestedString').value).toBe('nested');
+    expect(find(states, 'nested.withNull').value).toBeNull();
     expect(find(states, 'withAppState')).toBe(testAppState);
     expect(find(states, 'withType').value).toEqual({
       withPrimitive: null,
       withPrimitiveDefault: 'default',
       withRequiredPrimitive: 'required default',
       withDefaultValue: 'another default',
-      withShape: 'B',
+      withEnum: 'B',
       withEnumInArray: ['A'],
     });
   });

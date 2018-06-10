@@ -1,17 +1,16 @@
 export class InvalidConfigurator {}
 
 export class Configurator {
-  constructor(appstateType, defaultValue = null, shouldResetOnDisconnect = false) {
-    this.appstateType = appstateType;
+  constructor(dataType, defaultValue = null, resetOnBlink = false) {
+    this.dataType = dataType;
     this.defaultValue = defaultValue;
-    this.shouldResetOnDisconnect = shouldResetOnDisconnect;
+    this.resetOnBlink = resetOnBlink;
   }
 }
 
 export class ShapeConfigurator {
-  constructor(shapeConfig, bubbleUp) {
+  constructor(shapeConfig) {
     this.shapeConfig = shapeConfig;
-    this.bubbleUp = bubbleUp;
   }
 }
 

@@ -1,5 +1,5 @@
 import { isValidElement } from 'react';
-import { AppStateTypes, isAppState } from 'oxssy-appstate';
+import { datatype, Oxssy, OxssyMap } from 'oxssy';
 import {
   Configurator,
   InvalidConfigurator,
@@ -9,24 +9,24 @@ import {
 
 const exports = {};
 
-export const createConfigType = (appstateType, shouldResetOnDisconnect = false) =>
+export const createConfigType = (dataType, shouldResetOnDisconnect = false) =>
   (options) => {
     const configurator = new Configurator(
-      options ? appstateType.withOptions(options) : appstateType,
+      options ? dataType.withOptions(options) : dataType,
       null,
       shouldResetOnDisconnect,
     );
     configurator.defaultsTo = defaultValue =>
       new Configurator(
-        options ? appstateType.withOptions(options) : appstateType,
+        options ? dataType.withOptions(options) : dataType,
         defaultValue,
         shouldResetOnDisconnect,
       );
-    if (appstateType.isRequired) {
+    if (dataType.isRequired) {
       configurator.isRequired = new InvalidConfigurator();
       configurator.isRequired.defaultsTo = defaultValue =>
         new Configurator(
-          options ? appstateType.isRequired.withOptions(options) : appstateType.isRequired,
+          options ? dataType.isRequired.withOptions(options) : dataType.isRequired,
           defaultValue,
           shouldResetOnDisconnect,
         );
@@ -34,28 +34,28 @@ export const createConfigType = (appstateType, shouldResetOnDisconnect = false) 
     return configurator;
   };
 
-const createSimpleCompoundConfigType = (appstateType, shouldResetOnDisconnect = false) =>
+const createSimpleCompoundConfigType = (dataType, shouldResetOnDisconnect = false) =>
   (spec, options) =>
-    createConfigType(appstateType(spec), shouldResetOnDisconnect)(options);
+    createConfigType(dataType(spec), shouldResetOnDisconnect)(options);
 
 const createCustomConfigType = () =>
-  validationFunction => createConfigType(AppStateTypes.custom(validationFunction))();
+  validationFunction => createConfigType(datatype.custom(validationFunction))();
 
-const createShortcutConfigType = (appstateType, shouldResetOnDisconnect, builtInOptions) =>
+const createShortcutConfigType = (dataType, shouldResetOnDisconnect, builtInOptions) =>
   options =>
-    createConfigType(appstateType, shouldResetOnDisconnect)({ ...builtInOptions, ...options });
+    createConfigType(dataType, shouldResetOnDisconnect)({ ...builtInOptions, ...options });
 
 const primitives = {
-  Any: AppStateTypes.any,
-  Array: AppStateTypes.array,
-  Bool: AppStateTypes.bool,
-  Element: AppStateTypes.element,
-  Func: AppStateTypes.func,
-  Node: AppStateTypes.node,
-  Number: AppStateTypes.number,
-  Object: AppStateTypes.object,
-  String: AppStateTypes.string,
-  Symbol: AppStateTypes.symbol,
+  Any: datatype.any,
+  Array: datatype.array,
+  Bool: datatype.bool,
+  Element: datatype.element,
+  Func: datatype.func,
+  Node: datatype.node,
+  Number: datatype.number,
+  Object: datatype.object,
+  String: datatype.string,
+  Symbol: datatype.symbol,
 };
 
 Object.entries(primitives).forEach(([name, baseType]) => {
@@ -63,8 +63,8 @@ Object.entries(primitives).forEach(([name, baseType]) => {
 });
 
 const simpleCompounds = {
-  Enum: AppStateTypes.oneOf,
-  InstanceOf: AppStateTypes.instanceOf,
+  Enum: datatype.oneOf,
+  InstanceOf: datatype.instanceOf,
 };
 
 Object.entries(simpleCompounds).forEach(([name, baseType]) => {
@@ -72,10 +72,10 @@ Object.entries(simpleCompounds).forEach(([name, baseType]) => {
 });
 
 exports.OValidate = createCustomConfigType();
-exports.OEmail = createShortcutConfigType(AppStateTypes.string, false, { isEmail: true });
-exports.OUrl = createShortcutConfigType(AppStateTypes.string, false, { isUrl: true });
-exports.OUuid = createShortcutConfigType(AppStateTypes.string, false, { isUuid: true });
-exports.OPassword = createShortcutConfigType(AppStateTypes.string, true, {});
+exports.OEmail = createShortcutConfigType(datatype.string, false, { isEmail: true });
+exports.OUrl = createShortcutConfigType(datatype.string, false, { isUrl: true });
+exports.OUuid = createShortcutConfigType(datatype.string, false, { isUuid: true });
+exports.OPassword = createShortcutConfigType(datatype.string, true, {});
 
 export const inferType = (value) => {
   if (value === null) {
@@ -105,50 +105,53 @@ export const inferType = (value) => {
   return null;
 };
 
-const getAppStateTypeForShape = (shapeConfig) => {
-  if (isAppState(shapeConfig)) {
-    throw new Error('AppState is not allowed in shape definitions');
+export const isConfigured = (shapeConfig) =>
+  shapeConfig instanceof Oxssy || shapeConfig instanceof OxssyMap;
+
+const getDataTypeForShape = (shapeConfig) => {
+  if (isConfigured(shapeConfig)) {
+    throw new Error('Configured data is not allowed in shape definitions');
   }
   if (shapeConfig instanceof ShapeConfigurator) {
-    return getAppStateTypeForShape(shapeConfig.shapeConfig);
+    return getDataTypeForShape(shapeConfig.shapeConfig);
   }
   if (shapeConfig instanceof Configurator) {
-    return shapeConfig.appstateType;
+    return shapeConfig.dataType;
   }
   if (shapeConfig instanceof ValidationConfigurator) {
-    return AppStateTypes.symbol;
+    return datatype.symbol;
   }
   const configurator = inferType(shapeConfig);
   if (configurator) {
-    return configurator.appstateType;
+    return configurator.dataType;
   }
   if (Array.isArray(shapeConfig)) {
     const setOfTypes = new Set();
-    shapeConfig.forEach(child => setOfTypes.add(getAppStateTypeForShape(child)));
+    shapeConfig.forEach(child => setOfTypes.add(getDataTypeForShape(child)));
     const childTypes = setOfTypes.values();
     if (childTypes.length === 1) {
-      return AppStateTypes.arrayOf(childTypes[0]);
+      return datatype.arrayOf(childTypes[0]);
     }
-    return AppStateTypes.arrayOf(AppStateTypes.oneOfType(childTypes));
+    return datatype.arrayOf(datatype.oneOfType(childTypes));
   }
 
   const shapeType = {};
   Object.entries(shapeConfig).forEach(([name, child]) => {
-    shapeType[name] = getAppStateTypeForShape(child);
+    shapeType[name] = getDataTypeForShape(child);
   });
-  return AppStateTypes.exact(shapeType);
+  return datatype.exact(shapeType);
 };
 
-const createCompoundConfigType = (appstateType, shouldResetOnDisconnect = false) =>
+const createCompoundConfigType = (dataType, shouldResetOnDisconnect = false) =>
   (spec, options) =>
-    createConfigType(appstateType(getAppStateTypeForShape(spec)), shouldResetOnDisconnect)(options);
+    createConfigType(dataType(getDataTypeForShape(spec)), shouldResetOnDisconnect)(options);
 
 const compounds = {
-  ArrayOf: AppStateTypes.arrayOf,
-  ObjectOf: AppStateTypes.objectOf,
-  OneOf: AppStateTypes.oneOfType,
-  ShapeOf: AppStateTypes.shape,
-  ExactShapeOf: AppStateTypes.exact,
+  ArrayOf: datatype.arrayOf,
+  ObjectOf: datatype.objectOf,
+  OneOf: datatype.oneOfType,
+  ShapeOf: datatype.shape,
+  ExactShapeOf: datatype.exact,
 };
 
 Object.entries(compounds).forEach(([name, baseType]) => {

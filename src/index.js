@@ -1,18 +1,16 @@
 import {
-  AppState,
-  ArrayAppState,
-  CompositeAppState,
-  ValidationAppState,
+  Oxssy,
+  OxssyMap,
+  OxssyValidation,
   find,
-  isAppState,
-} from 'oxssy-appstate';
+} from 'oxssy';
 import {
   Configurator,
   InvalidConfigurator,
   ShapeConfigurator,
   ValidationConfigurator,
 } from './Configurator';
-import Types, { inferType } from './types';
+import Types, { inferType, isConfigured } from './types';
 
 export const {
   OAny,
@@ -35,61 +33,61 @@ export const {
   OValidate,
 } = Types;
 
-export function shape(appStatesConfig, bubbleUp = true) {
-  return new ShapeConfigurator(appStatesConfig, bubbleUp);
+export function shape(dataConfig) {
+  return new ShapeConfigurator(dataConfig);
 }
 
 export function validates(path) {
   return new ValidationConfigurator(path);
 }
 
-export function config(appStatesConfig, bubbleUp = true, key = null) {
-  if (isAppState(appStatesConfig)) {
-    return appStatesConfig;
+export function config(dataConfig) {
+  if (isConfigured(dataConfig)) {
+    return dataConfig;
   }
-  if (appStatesConfig instanceof InvalidConfigurator) {
-    throw new Error(`Required AppState must have a default value${key ? `: ${key}` : ''}`);
+  if (dataConfig instanceof InvalidConfigurator) {
+    throw new Error('Required data must have a default value');
   }
-  if (appStatesConfig instanceof Configurator) {
-    return new AppState(
-      appStatesConfig.appstateType,
-      appStatesConfig.defaultValue,
-      appStatesConfig.shouldResetOnDisconnect,
+  if (dataConfig instanceof Configurator) {
+    return new Oxssy(
+      dataConfig.dataType,
+      dataConfig.defaultValue,
+      dataConfig.resetOnBlink,
     );
   }
-  if (appStatesConfig instanceof ShapeConfigurator) {
-    return config(appStatesConfig.shapeConfig, appStatesConfig.bubbleUp);
+  if (dataConfig instanceof ShapeConfigurator) {
+    return config(dataConfig.shapeConfig);
   }
 
-  const configurator = inferType(appStatesConfig);
+  const configurator = inferType(dataConfig);
   if (configurator) {
-    return new AppState(
-      configurator.appstateType,
+    return new Oxssy(
+      configurator.dataType,
       configurator.defaultValue,
-      configurator.shouldResetOnDisconnect,
+      configurator.resetOnBlink,
     );
   }
 
-  if (Array.isArray(appStatesConfig)) {
-    const arrayState = new ArrayAppState();
-    appStatesConfig.forEach((childConfig) => {
-      arrayState.push(config(childConfig, bubbleUp));
+  if (Array.isArray(dataConfig)) {
+    const oxssyArray = new OxssyArray();
+    dataConfig.forEach((childConfig) => {
+      oxssyArray.push(config(childConfig));
     });
-    return arrayState;
+    return oxssyArray;
   }
 
-  const compositeState = new CompositeAppState();
+  const children = {};
   const validations = {};
-  Object.entries(appStatesConfig).forEach(([childName, childConfig]) => {
+  Object.entries(dataConfig).forEach(([childName, childConfig]) => {
     if (childConfig instanceof ValidationConfigurator) {
       validations[childName] = childConfig;
     } else {
-      compositeState.add(childName, config(childConfig, bubbleUp, childName));
+      children[childName] = config(childConfig);
     }
   });
-
+  const oxssyMap = new OxssyMap(children);
   Object.entries(validations).forEach(([childName, validation]) => {
-    compositeState.add(childName, new ValidationAppState(find(compositeState, validation.path)));
+    oxssyMap.set(childName, new OxssyValidation(find(oxssyMap, validation.path)));
   });
-  return compositeState;
+  return oxssyMap;
 }

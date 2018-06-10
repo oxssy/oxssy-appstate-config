@@ -1,22 +1,22 @@
 {
-  "name": "oxssy-appstate-config",
+  "name": "oxssy-config",
   "version": "0.1.1",
   "author": "Oxssy <oxssy.com@gmail.com>",
-  "description": "Simple configuration of AppStates",
+  "description": "Simple configuration of ReactJS states",
   "main": "dist/index.js",
   "keywords": [
     "mvc",
     "store",
     "flux"
   ],
-  "homepage": "http://github.com/oxssy/oxssy-appstate-config",
+  "homepage": "http://github.com/oxssy/oxssy-config",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "http://github.com/oxssy/oxssy-appstate-config.git"
+    "url": "http://github.com/oxssy/oxssy-config.git"
   },
   "dependencies": {
-    "oxssy-appstate": ">=0.4.0"
+    "oxssy": ">=0.1.1"
   },
   "devDependencies": {
     "babel-cli": ">=6.26.0",
