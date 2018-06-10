@@ -1,6 +1,6 @@
 {
   "name": "oxssy-config",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "author": "Oxssy <oxssy.com@gmail.com>",
   "description": "Simple configuration of ReactJS states",
   "main": "dist/index.js",
