@@ -12,13 +12,13 @@ const exports = {};
 export const createConfigType = (dataType, shouldResetOnDisconnect = false) =>
   (options) => {
     const configurator = new Configurator(
-      options ? dataType.withOptions(options) : dataType,
+      options ? dataType.withOption(options) : dataType,
       null,
       shouldResetOnDisconnect,
     );
     configurator.defaultsTo = defaultValue =>
       new Configurator(
-        options ? dataType.withOptions(options) : dataType,
+        options ? dataType.withOption(options) : dataType,
         defaultValue,
         shouldResetOnDisconnect,
       );
@@ -26,7 +26,7 @@ export const createConfigType = (dataType, shouldResetOnDisconnect = false) =>
       configurator.isRequired = new InvalidConfigurator();
       configurator.isRequired.defaultsTo = defaultValue =>
         new Configurator(
-          options ? dataType.isRequired.withOptions(options) : dataType.isRequired,
+          options ? dataType.isRequired.withOption(options) : dataType.isRequired,
           defaultValue,
           shouldResetOnDisconnect,
         );
